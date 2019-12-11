@@ -10,7 +10,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
 //			File file = new File(in);
 //			long fileSize = file.length();
 			BufferedReader buffer = new BufferedReader(new FileReader(in));
-			BufferedWriter outputSort = new BufferedWriter(new FileWriter("tmpPath\\step1.txt"));
+			BufferedWriter outputSort = new BufferedWriter(new FileWriter("tmp\\step1.txt"));
 //			Map<String, String> rowsMap = new HashMap<String, String>();
 			List<String[]> rows = new ArrayList<String[]>();
 			String line = buffer.readLine();
@@ -21,37 +21,50 @@ public class ExternalMemoryImpl extends IExternalMemory {
 //			rows.add(splitLine);
 			long totalReadBytes = 0;
 			boolean eof = false;
-//			buffer.mark(0);
+			buffer.mark(0);
 			buffer.reset();
-			while (totalReadBytes < 50 * Math.pow(10, 6) && !eof) {
-				readBytes = 0;
-				while (readBytes < 4096) {
-					line = buffer.readLine();
-					if (line == null || line.length() == 0) {
-						eof = true;
-						break;
+			while (!eof) {
+				System.out.println("Entered first loop");
+				while (totalReadBytes < 50 * Math.pow(10, 6) && !eof) {
+					System.out.println("Entered 2nd loop");
+					readBytes = 0;
+					while (readBytes < 4096) {
+						System.out.println("Entered 3rd loop");
+						line = buffer.readLine();
+						if (line == null || line.length() == 0) {
+							eof = true;
+							break;
+						}
+						splitLine = line.split(" ", 2);
+						rows.add(splitLine);
+						readBytes += lineSize;
 					}
-					splitLine = line.split(" ", 2);
-					rows.add(splitLine);
-					readBytes += lineSize;
+					totalReadBytes += readBytes;
 				}
-				totalReadBytes += readBytes;
-			}
-			rows.sort(new Comparator<String[]>() {
-				@Override
-				public int compare(String[] o1, String[] o2) {
-					if (o1[0].compareTo(o2[0]) < 0) {
-						return -1;
-					} else if (o1[0].compareTo(o2[0]) > 0) {
-						return 1;
-					} else {
-						return o1[1].compareTo(o2[1]);
+				rows.sort(new Comparator<String[]>() {
+					@Override
+					public int compare(String[] o1, String[] o2) {
+						if (o1[0].compareTo(o2[0]) < 0) {
+							return -1;
+						} else if (o1[0].compareTo(o2[0]) > 0) {
+							return 1;
+						} else {
+							return o1[1].compareTo(o2[1]);
+						}
 					}
+				});
+				for (String[] row : rows) {
+					outputSort.write(Arrays.toString(row)
+							.replace("[", "")
+							.replace("]","")
+							.replace(",", ""));
+					outputSort.newLine();
 				}
-			});
-			for (String[] row: rows) {
-				outputSort.write(Arrays.toString(row));
+				outputSort.flush();
+				rows.clear();
+				totalReadBytes = 0;
 			}
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
