@@ -10,22 +10,27 @@ public class ExternalMemoryImpl extends IExternalMemory {
 //			File file = new File(in);
 //			long fileSize = file.length();
 			BufferedReader buffer = new BufferedReader(new FileReader(in));
-			BufferedWriter outputSort = new BufferedWriter(new FileWriter("tmp\\step1.txt"));
+			BufferedWriter outputSort = new BufferedWriter(new FileWriter(tmpPath + "\\step1.txt"));
 //			Map<String, String> rowsMap = new HashMap<String, String>();
 			List<String[]> rows = new ArrayList<String[]>();
 			String line = buffer.readLine();
-			int lineSize = line.length() * 2;
+			long lineSize = line.length() * 2;
 			int readBytes;
 			String[] splitLine;
 //			rowsMap.put(splitLine[0], splitLine[1]);
 //			rows.add(splitLine);
 			long totalReadBytes = 0;
 			boolean eof = false;
-			buffer.mark(0);
-			buffer.reset();
+			buffer = new BufferedReader(new FileReader(in));
+
+			int numberOfBlockSets = 0;
+			int numOfRowsInBlockSet =0;
+			int numberOfRowsInBlock =0;
+
 			while (!eof) {
+				numberOfBlockSets++;
 				System.out.println("Entered first loop");
-				while (totalReadBytes < 50 * Math.pow(10, 6) && !eof) {
+				while (totalReadBytes < 2 * Math.pow(10, 6) && !eof) {
 					System.out.println("Entered 2nd loop");
 					readBytes = 0;
 					while (readBytes < 4096) {
@@ -39,7 +44,13 @@ public class ExternalMemoryImpl extends IExternalMemory {
 						rows.add(splitLine);
 						readBytes += lineSize;
 					}
+					if (numberOfBlockSets == 1){
+						numberOfRowsInBlock = rows.size();
+					}
 					totalReadBytes += readBytes;
+				}
+				if (numberOfBlockSets == 1){
+					numOfRowsInBlockSet = rows.size();
 				}
 				rows.sort(new Comparator<String[]>() {
 					@Override
@@ -64,12 +75,33 @@ public class ExternalMemoryImpl extends IExternalMemory {
 				rows.clear();
 				totalReadBytes = 0;
 			}
+			long[] pointers = new long[numberOfBlockSets];
+			for (int i = 0; i < numberOfBlockSets; i++) {
+				pointers[i] = i * numOfRowsInBlockSet;
+				System.out.println(Long.toString(pointers[i]));
+			}
+
+			BufferedReader bufferFirstStep = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
+			int k = 0;
+			String[] pointersValues = new String[numberOfBlockSets];
+//			while (k < numberOfBlockSets * numOfRowsInBlockSet) {
+				for (int i = 0; i < numberOfBlockSets; i++) {
+//					bufferFirstStep.mark(0);
+					bufferFirstStep.skip(pointers[i] * ((lineSize / 2) + 2));
+					pointersValues[i] = bufferFirstStep.readLine();
+//					bufferFirstStep.reset();
+					bufferFirstStep = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
+					System.out.println(pointersValues[i]);
+				}
+//			}
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+
 	}
 
 	@Override
