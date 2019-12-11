@@ -90,14 +90,18 @@ public class ExternalMemoryImpl extends IExternalMemory {
 			long rowSizeInChars = (lineSize / 2) + 2;
 			String[][] pointersValues = new String[numberOfBlockSets][2];
 			List<String> outputRows = new ArrayList<String>();
-			while (k < numOfRowsInBlockSet) {
+			while (k < numOfRowsInBlockSet * numberOfBlockSets) {
 				if (k % 100 == 0){
 					System.out.println("k: "+k);
 				}
 				for (int i = 0; i < numberOfBlockSets; i++) {
 //					bufferFirstStep.mark(0);
-					bufferFirstStep.skip(pointers[i] * rowSizeInChars);
-					line = bufferFirstStep.readLine();
+					if ((pointers[i] / numOfRowsInBlockSet) % numberOfBlockSets == i) {
+						bufferFirstStep.skip(pointers[i] * rowSizeInChars);
+						line = bufferFirstStep.readLine();
+					} else {
+						line = null;
+					}
 					if (line != null) {
 						pointersValues[i] = line.split(" ", 2);
 					} else {
@@ -122,7 +126,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
 						output.newLine();
 					}
 					output.flush();
-					rows.clear();
+					outputRows.clear();
 				}
 			}
 			System.out.println(k);
