@@ -12,14 +12,12 @@ public class ExternalMemoryImpl extends IExternalMemory {
 			BufferedReader buffer = new BufferedReader(new FileReader(in));
 			BufferedWriter outputSort = new BufferedWriter(new FileWriter(tmpPath + "\\step1.txt"));
 			BufferedWriter output = new BufferedWriter(new FileWriter(out));
-//			Map<String, String> rowsMap = new HashMap<String, String>();
-			List<String[]> rows = new ArrayList<String[]>();
+//			List<String[]> rows = new ArrayList<String[]>();
+			List<String> rows = new ArrayList<String>();
 			String line = buffer.readLine();
 			long lineSize = line.length() * 2;
 			int readBytes;
 			String[] splitLine;
-//			rowsMap.put(splitLine[0], splitLine[1]);
-//			rows.add(splitLine);
 			long totalReadBytes = 0;
 			boolean eof = false;
 			boolean blockRowsFlag = false;
@@ -32,7 +30,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
 			while (!eof) {
 				numberOfBlockSets++;
 //				System.out.println("Entered first loop");
-				while (totalReadBytes < 2 * Math.pow(10, 6) && !eof) {
+				while (totalReadBytes < 48.25 * Math.pow(10, 6) && !eof) {
 //					System.out.println("Entered 2nd loop");
 					readBytes = 0;
 					while (readBytes < 4096) {
@@ -42,8 +40,8 @@ public class ExternalMemoryImpl extends IExternalMemory {
 							eof = true;
 							break;
 						}
-						splitLine = line.split(" ", 2);
-						rows.add(splitLine);
+//						splitLine = line.split(" ", 2);
+						rows.add(line);
 						readBytes += lineSize;
 					}
 					if (!blockRowsFlag){
@@ -56,23 +54,13 @@ public class ExternalMemoryImpl extends IExternalMemory {
 					numOfRowsInBlockSet = rows.size();
 				}
 				rows.sort(new RowComparator());
-//				rows.sort(new Comparator<String[]>() {
-//					@Override
-//					public int compare(String[] o1, String[] o2) {
-//						if (o1[0].compareTo(o2[0]) < 0) {
-//							return -1;
-//						} else if (o1[0].compareTo(o2[0]) > 0) {
-//							return 1;
-//						} else {
-//							return o1[1].compareTo(o2[1]);
-//						}
-//					}
-//				});
-				for (String[] row : rows) {
-					outputSort.write(Arrays.toString(row)
-							.replace("[", "")
-							.replace("]","")
-							.replace(",", ""));
+
+				for (String row : rows) {
+					outputSort.write(row);
+//					outputSort.write(Arrays.toString(row)
+//							.replace("[", "")
+//							.replace("]","")
+//							.replace(",", ""));
 					outputSort.newLine();
 				}
 				outputSort.flush();
@@ -85,40 +73,65 @@ public class ExternalMemoryImpl extends IExternalMemory {
 				System.out.println(Long.toString(pointers[i]));
 			}
 
-			BufferedReader bufferFirstStep = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
+//			BufferedReader bufferFirstStep = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
+			BufferedReader[] bufferFirstStep = new BufferedReader[numberOfBlockSets];
 			int k = 0;
 			long rowSizeInChars = (lineSize / 2) + 2;
-			String[][] pointersValues = new String[numberOfBlockSets][2];
+			String[] pointersValues = new String[numberOfBlockSets];
 			List<String> outputRows = new ArrayList<String>();
-			while (k < numOfRowsInBlockSet * numberOfBlockSets) {
-				if (k % 100 == 0){
-					System.out.println("k: "+k);
-				}
-				for (int i = 0; i < numberOfBlockSets; i++) {
-//					bufferFirstStep.mark(0);
-					if ((pointers[i] / numOfRowsInBlockSet) % numberOfBlockSets == i) {
-						bufferFirstStep.skip(pointers[i] * rowSizeInChars);
-						line = bufferFirstStep.readLine();
-					} else {
-						line = null;
-					}
-					if (line != null) {
-						pointersValues[i] = line.split(" ", 2);
-					} else {
-						pointersValues[i] = null;
-					}
-//					bufferFirstStep.reset();
-					bufferFirstStep = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
-//					System.out.println(Arrays.toString(pointersValues[i]));
-				}
-				ArrayList<String[]> values = new ArrayList<String[]>(Arrays.asList(pointersValues));
-				int min_index = __find_min_index(values);
-				outputRows.add(Arrays.toString(values.get(min_index))
-						.replace("[", "")
-						.replace("]","")
-						.replace(",", ""));
+			ArrayList<String> values;
 
-				pointers[min_index]++;
+			// Init buffered readers
+			for (int i = 0; i < numberOfBlockSets; i++) {
+				bufferFirstStep[i] = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
+				bufferFirstStep[i].skip(pointers[i] * rowSizeInChars);
+			}
+
+			int min_index = -1;
+
+			while (k < numOfRowsInBlockSet * numberOfBlockSets) {
+//				if (k % 1000 == 0){
+//					System.out.println("k: "+k);
+//				}
+				if (min_index == -1) {
+					for (int i = 0; i < numberOfBlockSets; i++) {
+						line = bufferFirstStep[i].readLine();
+						pointersValues[i] = line;
+					}
+//					bufferFirstStep.mark(0);
+//					if ((pointers[i] / numOfRowsInBlockSet) % numberOfBlockSets == i) {
+//						bufferFirstStep.skip(pointers[i] * rowSizeInChars);
+//						line = bufferFirstStep[i].readLine();
+//					} else {
+//						line = null;
+//					}
+//					pointersValues[i] = line;
+//					bufferFirstStep.reset();
+//					bufferFirstStep = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
+//					System.out.println(Arrays.toString(pointersValues[i]));
+				} else {
+					line = bufferFirstStep[min_index].readLine();
+					pointersValues[min_index] = line;
+				}
+//				ArrayList<String[]> values = new ArrayList<String[]>(Arrays.asList(pointersValues));
+				values = new ArrayList<String>(Arrays.asList(pointersValues));
+				boolean allNull = true;
+				for (String strArray: values) {
+					if (strArray != null)
+					{
+						allNull = false;
+					}
+				}
+				if (allNull) {
+					break;
+				}
+				min_index = __find_min_index(values);
+				outputRows.add(values.get(min_index));
+//						.replace("[", "")
+//						.replace("]","")
+//						.replace(",", ""));
+
+//				pointers[min_index]++;
 				k++;
 				if (k % numberOfRowsInBlock == 0) {
 					for (String row: outputRows) {
@@ -140,7 +153,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
 	}
 
-	private int __find_min_index(List<String[]> values){
+	private int __find_min_index(List<String> values){
 		int index = 0;
 		RowComparator comparator = new RowComparator();
 		for (int i = 1; i < values.size(); i++) {
