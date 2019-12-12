@@ -141,9 +141,82 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
     @Override
     protected void join(String in1, String in2, String out, String tmpPath) {
+//        sort(in1, "sorted_r.txt", tmpPath);
+//        sort(in2, "sorted_s.txt", tmpPath);
 
-        // TODO Auto-generated method stub
+//        BufferedReader tr_buffer = new BufferedReader[3];
+        try {
+            BufferedReader tr_buffer = new BufferedReader(new FileReader(in1));
+            BufferedReader ts_buffer = new BufferedReader(new FileReader(in2));
+            BufferedReader gs_buffer = new BufferedReader(new FileReader(in2));
+            BufferedWriter outputJoin = new BufferedWriter(new FileWriter(out));
 
+            boolean tr_eof = false;
+            boolean ts_eof = false;
+            boolean gs_eof = false;
+
+            String tr = tr_buffer.readLine();
+            String ts = ts_buffer.readLine();
+            String gs = gs_buffer.readLine();
+            int numOfRowsInBlock = 4096 / tr.length() * 2;
+
+            ArrayList<String> output = new ArrayList<>();
+
+            while (!tr_eof && !gs_eof){
+                while (!tr_eof &&  compareByKey(tr, gs) < 0){
+                    tr = tr_buffer.readLine();
+                    if (tr == null || tr.length() == 0) {
+                        tr_eof = true;
+                    }
+                }while (!gs_eof &&  compareByKey(tr, gs) > 0) {
+                    gs = gs_buffer.readLine();
+                    if (gs == null || gs.length() == 0) {
+                        gs_eof = true;
+                    }
+                } while (!tr_eof && compareByKey(tr, gs) == 0){
+                    ts_buffer = gs_buffer;
+                    ts = gs;
+                    // maybe ts = ts_buffer.readLine()
+                    while (!ts_eof && compareByKey(ts, tr) == 0){
+                        output.add(tr + " " + ts.split(" ", 2)[1]);
+                        if (output.size() == numOfRowsInBlock) {
+                            for (String row: output) {
+                                outputJoin.write(row + "\n");
+                            }
+                            output.clear();
+                        }
+                        ts = ts_buffer.readLine();
+                        if (ts == null || ts.length() == 0) {
+                            ts_eof = true;
+                        }
+//                        String[] tr_split = tr.split(" ",2)
+                    }
+                    tr = tr_buffer.readLine();
+                    if (tr == null || tr.length() == 0) {
+                        tr_eof = true;
+                    }
+                }
+                gs_buffer = ts_buffer;
+                gs = ts;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    int compareByKey(String row1, String row2) {
+        if (row1 == null) {
+            return 1;
+        } else if (row2 == null) {
+            return -1;
+        }
+        String row1Key = row1.split(" ", 2)[0];
+        String row2Key = row2.split(" ", 2)[0];
+        return row1Key.compareTo(row2Key);
     }
 
     @Override
