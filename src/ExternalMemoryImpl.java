@@ -229,8 +229,6 @@ public class ExternalMemoryImpl extends IExternalMemory {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
     int compareByKey(String row1, String row2) {
@@ -246,8 +244,32 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
     @Override
     protected void select(String in, String out, String substrSelect, String tmpPath) {
-
         // TODO Auto-generated method stub
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(in));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(out));
+            boolean eof = false;
+
+            while (!eof) {
+                String line = reader.readLine();
+                if (line == null || line.length() == 0) {
+                    eof = true;
+                    break;
+                }
+                String id = line.split(" ", 2)[0];
+                if (id.contains(substrSelect)) {
+                    writer.write(line + "\n");
+                }
+            }
+
+            reader.close();
+            writer.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
