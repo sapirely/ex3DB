@@ -1,4 +1,5 @@
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 
 public class ExternalMemoryImpl extends IExternalMemory {
@@ -7,8 +8,10 @@ public class ExternalMemoryImpl extends IExternalMemory {
     public void sort(String in, String out, String tmpPath) {
         // TODO: Implement
         try {
+            File tempFile = File.createTempFile("step1_", ".txt", new File(tmpPath));
+            tempFile.deleteOnExit();
             BufferedReader buffer = new BufferedReader(new FileReader(in));
-            BufferedWriter outputSort = new BufferedWriter(new FileWriter(tmpPath + "\\step1.txt"));
+            BufferedWriter outputSort = new BufferedWriter(new FileWriter(tempFile));
             BufferedWriter output = new BufferedWriter(new FileWriter(out));
             List<String> rows = new ArrayList<String>();
             String line = buffer.readLine();
@@ -49,7 +52,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
                 rows.sort(new RowComparator());
 
                 for (String row : rows) {
-                    outputSort.write(row+"\n");
+                    outputSort.write(row + "\n");
                 }
                 outputSort.flush();
                 rows.clear();
@@ -69,9 +72,8 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
             // Init buffered readers
             for (int i = 0; i < numberOfBlockSets; i++) {
-                bufferFirstStep[i] = new BufferedReader(new FileReader(tmpPath + "\\step1.txt"));
+                bufferFirstStep[i] = new BufferedReader(new FileReader(tempFile));
                 bufferFirstStep[i].skip(pointers[i] * rowSizeInChars);
-
             }
 
             int min_index = -1;
@@ -111,13 +113,20 @@ public class ExternalMemoryImpl extends IExternalMemory {
                 k++;
                 if (k % numberOfRowsInBlock == 0) {
                     for (String row : outputRows) {
-                        output.write(row+"\n");
+                        output.write(row + "\n");
 //                        output.newLine();
 //                        output.write("\n");
                     }
                     output.flush();
                     outputRows.clear();
                 }
+            }
+            buffer.close();
+            output.close();
+            outputSort.close();
+            // Closes buffered readers
+            for (int i = 0; i < numberOfBlockSets; i++) {
+                bufferFirstStep[i].close();
             }
 //            System.out.println(k);
 
@@ -148,57 +157,73 @@ public class ExternalMemoryImpl extends IExternalMemory {
         try {
             BufferedReader tr_buffer = new BufferedReader(new FileReader(in1));
             BufferedReader ts_buffer = new BufferedReader(new FileReader(in2));
-            BufferedReader gs_buffer = new BufferedReader(new FileReader(in2));
+//            BufferedReader gs_buffer = new BufferedReader(new FileReader(in2));
             BufferedWriter outputJoin = new BufferedWriter(new FileWriter(out));
 
             boolean tr_eof = false;
             boolean ts_eof = false;
-            boolean gs_eof = false;
+//            boolean gs_eof = false;
 
             String tr = tr_buffer.readLine();
             String ts = ts_buffer.readLine();
-            String gs = gs_buffer.readLine();
+//            String gs = gs_buffer.readLine();
             int numOfRowsInBlock = 4096 / tr.length() * 2;
 
             ArrayList<String> output = new ArrayList<>();
 
-            while (!tr_eof && !gs_eof){
-                while (!tr_eof &&  compareByKey(tr, gs) < 0){
+            while (!tr_eof) {
+                while (!tr_eof && compareByKey(tr, ts) < 0) {
                     tr = tr_buffer.readLine();
                     if (tr == null || tr.length() == 0) {
                         tr_eof = true;
                     }
-                }while (!gs_eof &&  compareByKey(tr, gs) > 0) {
-                    gs = gs_buffer.readLine();
-                    if (gs == null || gs.length() == 0) {
-                        gs_eof = true;
-                    }
-                } while (!tr_eof && compareByKey(tr, gs) == 0){
-                    ts_buffer = gs_buffer;
-                    ts = gs;
-                    // maybe ts = ts_buffer.readLine()
-                    while (!ts_eof && compareByKey(ts, tr) == 0){
+                }
+//                while (!ts_eof && compareByKey(tr, gs) > 0) {
+//                    gs = gs_buffer.readLine();
+//                    if (gs == null || gs.length() == 0) {
+//                        gs_eof = true;
+//                    }
+//                }
+//                while (!tr_eof && compareByKey(tr, gs) == 0) {
+//                    ts_buffer = deepcopy(gs_buffer)
+//                    ts = gs;
+//                    // maybe ts = ts_buffer.readLine()
+                    while (!ts_eof && compareByKey(ts, tr) == 0) {
                         output.add(tr + " " + ts.split(" ", 2)[1]);
-                        if (output.size() == numOfRowsInBlock) {
-                            for (String row: output) {
-                                outputJoin.write(row + "\n");
-                            }
-                            output.clear();
-                        }
                         ts = ts_buffer.readLine();
                         if (ts == null || ts.length() == 0) {
                             ts_eof = true;
                         }
 //                        String[] tr_split = tr.split(" ",2)
                     }
+                    if (output.size() == numOfRowsInBlock) {
+                        for (String row : output) {
+                            outputJoin.write(row + "\n");
+                        }
+                        output.clear();
+                        outputJoin.flush();
+                    }
                     tr = tr_buffer.readLine();
                     if (tr == null || tr.length() == 0) {
                         tr_eof = true;
                     }
-                }
-                gs_buffer = ts_buffer;
-                gs = ts;
+//                }
+//                gs_buffer = ts_buffer;
+//                gs = ts;
             }
+
+            if (output.size() > 0) {
+                for (String row : output) {
+                    outputJoin.write(row + "\n");
+                }
+                output.clear();
+                outputJoin.flush();
+            }
+
+            tr_buffer.close();
+            ts_buffer.close();
+            outputJoin.close();
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {

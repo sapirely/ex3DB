@@ -40,12 +40,12 @@ public abstract class IExternalMemory {
 		this.sort(in2, tmpOut2,tmpPath);
 		this.join(tmpOut1,tmpOut2,out,tmpPath);
 
-		try {
-			Files.deleteIfExists(Paths.get(tmpPath, tmpFileName1));
-			Files.deleteIfExists(Paths.get(tmpPath, tmpFileName2));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			Files.deleteIfExists(Paths.get(tmpPath, tmpFileName1));
+//			Files.deleteIfExists(Paths.get(tmpPath, tmpFileName2));
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 	/**
