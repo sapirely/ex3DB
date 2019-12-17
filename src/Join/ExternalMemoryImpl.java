@@ -174,7 +174,12 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
             String tr = tr_buffer.readLine();
             String ts = ts_buffer.readLine();
-            int numOfRowsInBlock = 4096 / (tr.length() * 2);
+            int numOfRowsInBlock;
+            if (tr != null) {
+                numOfRowsInBlock = 4096 / (tr.length() * 2);
+            } else {
+                numOfRowsInBlock = 4096 / 104;
+            }
 
             ArrayList<String> output = new ArrayList<>();
 
@@ -273,11 +278,22 @@ public class ExternalMemoryImpl extends IExternalMemory {
                                          String substrSelect, String tmpPath) {
         // sort and select
         this.substrSelect = substrSelect;
-        sort(in1, tmpPath + "/sorted1.txt", tmpPath);
-        sort(in2, tmpPath + "/sorted2.txt", tmpPath);
-        this.substrSelect = null;
+        try {
+            File tempFile1 = File.createTempFile("sorted1.txt", ".txt", new File(tmpPath));
+            File tempFile2 = File.createTempFile("sorted2.txt", ".txt", new File(tmpPath));
+            tempFile1.deleteOnExit();
 
-        join(tmpPath+"/sorted1.txt", tmpPath+"/sorted2.txt", out, tmpPath);
+            tempFile2.deleteOnExit();
+            sort(in1, tempFile1.getPath(), tmpPath);
+            sort(in2, tempFile2.getPath(), tmpPath);
+            this.substrSelect = null;
+
+            join(tempFile1.getPath(), tempFile2.getPath(), out, tmpPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
 
