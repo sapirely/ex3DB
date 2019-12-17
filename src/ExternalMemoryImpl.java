@@ -29,7 +29,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
             while (!eof) {
                 numberOfBlockSets++;
-                while (totalReadBytes < 48 * Math.pow(10, 6) && !eof) {
+                while (totalReadBytes < 30 * Math.pow(10, 6) && !eof) {
                     readBytes = 0;
                     while (readBytes < 4096) {
                         line = buffer.readLine();
@@ -167,7 +167,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
             String tr = tr_buffer.readLine();
             String ts = ts_buffer.readLine();
 //            String gs = gs_buffer.readLine();
-            int numOfRowsInBlock = 4096 / tr.length() * 2;
+            int numOfRowsInBlock = 4096 / (tr.length() * 2);
 
             ArrayList<String> output = new ArrayList<>();
 
@@ -188,14 +188,14 @@ public class ExternalMemoryImpl extends IExternalMemory {
 //                    ts_buffer = deepcopy(gs_buffer)
 //                    ts = gs;
 //                    // maybe ts = ts_buffer.readLine()
-                    while (!ts_eof && compareByKey(ts, tr) == 0) {
-                        output.add(tr + " " + ts.split(" ", 2)[1]);
-                        ts = ts_buffer.readLine();
-                        if (ts == null || ts.length() == 0) {
-                            ts_eof = true;
-                        }
-//                        String[] tr_split = tr.split(" ",2)
+                while (!ts_eof && compareByKey(ts, tr) == 0) {
+                    output.add(tr + " " + ts.split(" ", 2)[1]);
+                    ts = ts_buffer.readLine();
+                    if (ts == null || ts.length() == 0) {
+                        ts_eof = true;
                     }
+//                        String[] tr_split = tr.split(" ",2)
+//                    }
                     if (output.size() == numOfRowsInBlock) {
                         for (String row : output) {
                             outputJoin.write(row + "\n");
@@ -203,10 +203,12 @@ public class ExternalMemoryImpl extends IExternalMemory {
                         output.clear();
                         outputJoin.flush();
                     }
-                    tr = tr_buffer.readLine();
-                    if (tr == null || tr.length() == 0) {
-                        tr_eof = true;
-                    }
+                }
+                tr = tr_buffer.readLine();
+                if (tr == null || tr.length() == 0) {
+                    tr_eof = true;
+                }
+
 //                }
 //                gs_buffer = ts_buffer;
 //                gs = ts;
