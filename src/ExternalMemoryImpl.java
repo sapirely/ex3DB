@@ -4,6 +4,8 @@ import java.util.*;
 
 public class ExternalMemoryImpl extends IExternalMemory {
 
+    private String substrSelect = null;
+
     @Override
     public void sort(String in, String out, String tmpPath) {
         // TODO: Implement
@@ -17,7 +19,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
             String line = buffer.readLine();
             long lineSize = line.length() * 2;
             int readBytes;
-            String[] splitLine;
+//            String[] splitLine;
             long totalReadBytes = 0;
             boolean eof = false;
             boolean blockRowsFlag = false;
@@ -37,7 +39,15 @@ public class ExternalMemoryImpl extends IExternalMemory {
                             eof = true;
                             break;
                         }
-                        rows.add(line);
+
+                        // for part D
+                        if (substrSelect != null) {
+                            String id = line.split(" ", 2)[0];
+                            if (id.contains(substrSelect)) {
+                                rows.add(line);
+                            }
+                        }
+
                         readBytes += lineSize;
                     }
                     if (!blockRowsFlag) {
@@ -278,9 +288,13 @@ public class ExternalMemoryImpl extends IExternalMemory {
     @Override
     public void joinAndSelectEfficiently(String in1, String in2, String out,
                                          String substrSelect, String tmpPath) {
+        // sort and select
+        this.substrSelect = substrSelect;
+        sort(in1, tmpPath + "/sorted1.txt", tmpPath);
+        sort(in2, tmpPath + "/sorted2.txt", tmpPath);
+        this.substrSelect = null;
 
-        // TODO Auto-generated method stub
-
+        join("sorted1.txt", "sorted2.txt", out, tmpPath);
     }
 
 
