@@ -9,7 +9,6 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
     @Override
     public void sort(String in, String out, String tmpPath) {
-        // TODO: Implement
         try {
             File tempFile = File.createTempFile("step1_", ".txt", new File(tmpPath));
             tempFile.deleteOnExit();
@@ -20,7 +19,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
             String line = buffer.readLine();
             long lineSize = line.length() * 2;
             int readBytes;
-//            String[] splitLine;
+
             long totalReadBytes = 0;
             boolean eof = false;
             boolean blockRowsFlag = false;
@@ -128,8 +127,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
                 if (k % numberOfRowsInBlock == 0) {
                     for (String row : outputRows) {
                         output.write(row + "\n");
-//                        output.newLine();
-//                        output.write("\n");
+
                     }
                     output.flush();
                     outputRows.clear();
@@ -142,7 +140,6 @@ public class ExternalMemoryImpl extends IExternalMemory {
             for (int i = 0; i < numberOfBlockSets; i++) {
                 bufferFirstStep[i].close();
             }
-//            System.out.println(k);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -196,8 +193,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
                     if (ts == null || ts.length() == 0) {
                         ts_eof = true;
                     }
-//                        String[] tr_split = tr.split(" ",2)
-//                    }
+
                     if (output.size() == numOfRowsInBlock) {
                         for (String row : output) {
                             outputJoin.write(row + "\n");
@@ -244,7 +240,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
     @Override
     protected void select(String in, String out, String substrSelect, String tmpPath) {
-        // TODO Auto-generated method stub
+
         try {
             BufferedReader reader = new BufferedReader(new FileReader(in));
             BufferedWriter writer = new BufferedWriter(new FileWriter(out));
