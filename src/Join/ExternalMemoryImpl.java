@@ -1,5 +1,6 @@
+package Join;
+
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 
 public class ExternalMemoryImpl extends IExternalMemory {
@@ -45,10 +46,13 @@ public class ExternalMemoryImpl extends IExternalMemory {
                             String id = line.split(" ", 2)[0];
                             if (id.contains(substrSelect)) {
                                 rows.add(line);
+                                readBytes += lineSize;
                             }
+                        } else {
+                            rows.add(line);
+                            readBytes += lineSize;
                         }
 
-                        readBytes += lineSize;
                     }
                     if (!blockRowsFlag) {
                         numberOfRowsInBlock = rows.size();
@@ -160,23 +164,16 @@ public class ExternalMemoryImpl extends IExternalMemory {
 
     @Override
     protected void join(String in1, String in2, String out, String tmpPath) {
-//        sort(in1, "sorted_r.txt", tmpPath);
-//        sort(in2, "sorted_s.txt", tmpPath);
-
-//        BufferedReader tr_buffer = new BufferedReader[3];
         try {
             BufferedReader tr_buffer = new BufferedReader(new FileReader(in1));
             BufferedReader ts_buffer = new BufferedReader(new FileReader(in2));
-//            BufferedReader gs_buffer = new BufferedReader(new FileReader(in2));
             BufferedWriter outputJoin = new BufferedWriter(new FileWriter(out));
 
             boolean tr_eof = false;
             boolean ts_eof = false;
-//            boolean gs_eof = false;
 
             String tr = tr_buffer.readLine();
             String ts = ts_buffer.readLine();
-//            String gs = gs_buffer.readLine();
             int numOfRowsInBlock = 4096 / (tr.length() * 2);
 
             ArrayList<String> output = new ArrayList<>();
@@ -188,16 +185,6 @@ public class ExternalMemoryImpl extends IExternalMemory {
                         tr_eof = true;
                     }
                 }
-//                while (!ts_eof && compareByKey(tr, gs) > 0) {
-//                    gs = gs_buffer.readLine();
-//                    if (gs == null || gs.length() == 0) {
-//                        gs_eof = true;
-//                    }
-//                }
-//                while (!tr_eof && compareByKey(tr, gs) == 0) {
-//                    ts_buffer = deepcopy(gs_buffer)
-//                    ts = gs;
-//                    // maybe ts = ts_buffer.readLine()
                 while (!ts_eof && compareByKey(ts, tr) == 0) {
                     output.add(tr + " " + ts.split(" ", 2)[1]);
                     ts = ts_buffer.readLine();
@@ -218,10 +205,6 @@ public class ExternalMemoryImpl extends IExternalMemory {
                 if (tr == null || tr.length() == 0) {
                     tr_eof = true;
                 }
-
-//                }
-//                gs_buffer = ts_buffer;
-//                gs = ts;
             }
 
             if (output.size() > 0) {
@@ -294,7 +277,7 @@ public class ExternalMemoryImpl extends IExternalMemory {
         sort(in2, tmpPath + "/sorted2.txt", tmpPath);
         this.substrSelect = null;
 
-        join("sorted1.txt", "sorted2.txt", out, tmpPath);
+        join(tmpPath+"/sorted1.txt", tmpPath+"/sorted2.txt", out, tmpPath);
     }
 
 
